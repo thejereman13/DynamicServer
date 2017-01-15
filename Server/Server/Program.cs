@@ -8,45 +8,53 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
+using System.Net.Sockets;
+using System.Net;
 
 namespace Server
 {
     class Program
     {
-        static bool executeLogic = true;
+        public static bool executeLogic = false;
+		public static bool runServer = true;
         public static string modulePath = "../../../Modules/";
         static Thread loop;
-        delegate void voidCall();
-        static event voidCall LoopEvent;
+		static Thread packet;
+        static event Action LoopEvent;
+		delegate void packetCall(UDPFrame message);
+		static event packetCall packetEvent;
+
         public static List<object> classes = new List<object>();
 
         static void Main(string[] args){
-            LoadModules();
+
+			LoadModules();
             loop = new Thread(Loop);
+			loop.IsBackground = true;
             loop.Start();
-            while (executeLogic) {
-                string s = Console.ReadLine();
-                switch (s) { 
-                    case "exit":
-                    case "Exit":
-                        executeLogic = false;
-                        break;
-                    case "reload":
-                    case "Reload":
-                        LoadModules();
-                        break;
-                }
+			packet = new Thread(ClientManagement.retrievalLoop);
+			packet.IsBackground = true;
+			packet.Start();
+            while (runServer) {
+				string s = Console.ReadLine();
+				Console.WriteLine(Terminal.ExecuteCommand(s));
 
             }
+			executeLogic = false;
         }
 
         static void LoadModules() {
             if (LoopEvent != null)
                 foreach (Delegate v in LoopEvent.GetInvocationList())
                 {
-                    LoopEvent -= (voidCall)v;
+                    LoopEvent -= (Action)v;
                 }
-            string[] modules = Directory.GetFiles(modulePath);
+			if(packetEvent != null)
+				foreach(Delegate v in packetEvent.GetInvocationList()) {
+					packetEvent -= (packetCall)v;
+				}
+
+			string[] modules = Directory.GetFiles(modulePath);
             foreach (string s in modules)
             {
                 try
@@ -62,9 +70,12 @@ namespace Server
                     {
                         if (t.GetMethod("LogicHook") != null)
                         {
-                            LoopEvent += (voidCall)Delegate.CreateDelegate(typeof(voidCall), t.GetMethod("LogicHook"));
+                            LoopEvent += (Action)Delegate.CreateDelegate(typeof(Action), t.GetMethod("LogicHook"));
                         }
-                    }
+						if(t.GetMethod("PacketHook") != null) {
+							packetEvent += (packetCall)Delegate.CreateDelegate(typeof(packetCall), t.GetMethod("PacketHook"));
+						}
+					}
                     catch (Exception g)
                     {
                         Console.WriteLine(g.StackTrace);
@@ -80,7 +91,7 @@ namespace Server
         }
 
 
-        static void Loop() {
+        public static void Loop() {
             long updateTime = (long)(1000 / 2.0);
             Stopwatch s = Stopwatch.StartNew();
             while (executeLogic) {
@@ -90,5 +101,9 @@ namespace Server
                 Thread.Sleep((int)(updateTime - s.ElapsedMilliseconds));
             }
         }
+
+		public static void PacketCall(UDPFrame data) {
+			packetEvent.Invoke(data);
+		}
     }
 }
