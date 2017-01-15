@@ -9,7 +9,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server {
+namespace DynamicServer {
 	class ClientManagement {
 
 		private const int port = 10069;
@@ -48,12 +48,27 @@ namespace Server {
 				if(output.command.Equals("~add")) {
 					newClient(groupEP);
 					Console.WriteLine("New Client: " + groupEP.Port.ToString());
-				} else if(output.command.Equals("~remove")) {
-					if (clients.ContainsKey(output.data[0]))
-						clients.Remove(output.data[0]);
-				} else {
-				Program.PacketCall(output);
 				}
+				checkCommands(groupEP, output);
+			}
+		}
+
+		private static void checkCommands(IPEndPoint groupEP, UDPFrame output) {
+			switch(output.command) {
+				case "~remove":
+					if(clients.ContainsKey(output.data[0]))
+						clients.Remove(output.data[0]);
+					break;
+				case "console":
+					string o = "";
+					foreach(string s in output.data) {
+						o += (s + " ");
+					}
+					sendPacket(groupEP, "commandResponse", new string[] { Terminal.ExecuteCommand(o) });
+					break;
+				default:
+					Program.PacketCall(output);
+					break;
 			}
 		}
 

@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using DynamicServer;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -56,13 +57,23 @@ namespace UDPClient {
 			client.Send(sendbuffer, sendbuffer.Length, ep);
 			
 		}
+
+		public static void sendPacket(string comm, string[] dat) {
+			byte[] sendbuffer = UDPtoBytes(new UDPFrame { command = comm, data = dat});
+			IPEndPoint ep = new IPEndPoint(server, port);
+			client.Send(sendbuffer, sendbuffer.Length, ep);
+		}
 		
 		private void checkCommands(UDPFrame recieved) {
 			switch(recieved.command) {
 				case "~":
 					uid = recieved.data[0];
+					ac("Connection established with the Server");
 					break;
 				case "display":
+					ac(recieved.data[0]);
+					break;
+				case "commandResponse":
 					ac(recieved.data[0]);
 					break;
 			}

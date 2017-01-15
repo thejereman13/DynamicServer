@@ -18,11 +18,13 @@ namespace UDPClient {
 		}
 
 		public void setText(String s) {
-			if(this.textBox1.InvokeRequired) {
+			if(this.richTextBox1.InvokeRequired) {
 				stringpass d = new stringpass(setText);
 				this.Invoke(d, new object[] { s });
 			} else {
-				textBox1.Text = s;
+				richTextBox1.Text += (s + "\n");
+				richTextBox1.SelectionStart = richTextBox1.Text.Length;
+				richTextBox1.ScrollToCaret();
 			}
 		}
 
@@ -32,6 +34,15 @@ namespace UDPClient {
 
 		private void button1_Click(object sender, EventArgs e) {
 			PacketTransfer.pullIP();
+		}
+
+		private void textBox1_KeyPress(object sender, KeyPressEventArgs e) {
+			if(e.KeyChar == (char)Keys.Enter) {
+				List<string> args = textBox1.Text.Split(' ').ToList();
+				PacketTransfer.sendPacket("console", args.ToArray());
+				textBox1.Text = "";
+				e.Handled = true;
+			}
 		}
 	}
 }

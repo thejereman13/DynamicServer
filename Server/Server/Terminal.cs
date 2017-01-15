@@ -6,18 +6,23 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server {
-	class Terminal {
-		private delegate String consoleCall(List<string> args);
+namespace DynamicServer {
+	public class Terminal {
+		public delegate String consoleCall(List<string> args);
 		private static Dictionary<string, consoleCall> commands = new Dictionary<string, consoleCall>();
 
 		static Terminal() {
-			commands.Add("ECHO", Echo);
-			commands.Add("SETLOGIC", SetLogic);
-			commands.Add("EXIT", Exit);
-			commands.Add("SENDPACKET", SendPacket);
 			commands.Add("BROADCASTPACKET", BroadcastPacket);
+			commands.Add("ECHO", Echo);
+			commands.Add("EXIT", Exit);
 			commands.Add("HELP", Help);
+			commands.Add("RELOADMODULES", ReloadModules);
+			commands.Add("SENDPACKET", SendPacket);
+			commands.Add("SETLOGIC", SetLogic);
+		}
+
+		public static void AddCommand(string name, consoleCall com) {
+			commands.Add(name, com);
 		}
 
 		public static string ExecuteCommand(string paths) {
@@ -40,7 +45,8 @@ namespace Server {
 		}
 
 		private static string SetLogic(List<string> args) {
-			if(args.Capacity > 0 && Boolean.TryParse(args[0], out Program.executeLogic)) {
+			Console.WriteLine(args.Capacity);
+			if(args.Capacity > 1 && Boolean.TryParse(args[0], out Program.executeLogic)) {
 				if (Program.executeLogic)
 					Program.Loop();
 				return "Logic set to " + Program.executeLogic;
@@ -54,11 +60,11 @@ namespace Server {
 			return "";
 		}
 		private static string Help(List<string> args) {
-			Console.WriteLine("Available Commands: \n");
+			string o = "Available Commands: \n";
 			foreach(KeyValuePair<string, consoleCall> c in commands) {
-				Console.WriteLine(c.Key);
+				o += (c.Key + "\n");
 			}
-			return "";
+			return o;
 		}
 
 		private static string SendPacket(List<string> args) {
@@ -69,6 +75,11 @@ namespace Server {
 		private static string BroadcastPacket(List<string> args) {
 			ClientManagement.sendAll("display", args.ToArray());
 			return "UDP sent to all clients";
+		}
+
+		private static string ReloadModules(List<string> args) {
+			Program.LoadModules();
+			return "Reloaded";
 		}
 
 	}

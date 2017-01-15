@@ -4,29 +4,28 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
-using System.Net.Sockets;
-using System.Net;
 
-namespace Server
+namespace DynamicServer
 {
-    class Program
+    public class Program
     {
         public static bool executeLogic = false;
 		public static bool runServer = true;
-        public static string modulePath = "../../../Modules/";
+        public static string modulePath = "Modules/";
         static Thread loop;
 		static Thread packet;
-        static event Action LoopEvent;
-		delegate void packetCall(UDPFrame message);
-		static event packetCall packetEvent;
+        public static event Action LoopEvent;
+		public static event Action reloadEvent;		//Called before modules are reloaded in LoadModules()
+		public delegate void packetCall(UDPFrame message);
+		public static event packetCall packetEvent;
 
         public static List<object> classes = new List<object>();
 
         static void Main(string[] args){
+			if(Debugger.IsAttached)
+				modulePath = "../../../Modules/";
 
 			LoadModules();
             loop = new Thread(Loop);
@@ -43,7 +42,9 @@ namespace Server
 			executeLogic = false;
         }
 
-        static void LoadModules() {
+        public static void LoadModules() {
+			if (reloadEvent != null)
+				reloadEvent.Invoke();
             if (LoopEvent != null)
                 foreach (Delegate v in LoopEvent.GetInvocationList())
                 {
@@ -75,6 +76,8 @@ namespace Server
 						if(t.GetMethod("PacketHook") != null) {
 							packetEvent += (packetCall)Delegate.CreateDelegate(typeof(packetCall), t.GetMethod("PacketHook"));
 						}
+						if(t.GetMethod("AddHooks") != null)
+							t.GetMethod("AddHooks").Invoke(c, null);
 					}
                     catch (Exception g)
                     {
@@ -103,7 +106,8 @@ namespace Server
         }
 
 		public static void PacketCall(UDPFrame data) {
-			packetEvent.Invoke(data);
+			if (packetEvent != null)
+				packetEvent.Invoke(data);
 		}
     }
 }
