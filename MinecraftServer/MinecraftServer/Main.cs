@@ -67,6 +67,8 @@ namespace MinecraftServer {
 						}
 					case "help":
 						return "start \n stop \n showOutput [true/false] \n sendCommand [args] \n";
+					case "status":
+						return (serverRunning) ? ("Server Running") : ("Server Offline");
 					default:
 						return "No Command Found";
 				}
@@ -76,6 +78,8 @@ namespace MinecraftServer {
 		}
 
 		private void startServer() {
+			if(serverRunning)
+				return;
 			cmd.Start();
 			cmd.StandardInput.WriteLine("cd MCServer && LaunchServer.bat");
 			cmd.StandardInput.Flush();
@@ -83,6 +87,8 @@ namespace MinecraftServer {
 			serverRunning = true;
 		}
 		private void stopServer() {
+			if(!serverRunning)
+				return;
 			cmd.StandardInput.WriteLine("stop");
 			cmd.StandardInput.Flush();
 			serverRunning = false;

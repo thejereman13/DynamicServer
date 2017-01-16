@@ -24,9 +24,9 @@ namespace DynamicServer
         public static List<object> classes = new List<object>();
 
         static void Main(string[] args){
-			if(Debugger.IsAttached)
+			if(Debugger.IsAttached) {
 				modulePath = "../../../Modules/";
-
+			}
 			LoadModules();
             loop = new Thread(Loop);
 			loop.IsBackground = true;
@@ -63,7 +63,7 @@ namespace DynamicServer
                     if (!s.Substring(s.Length - 4).Equals(".dll"))
                         throw new FileLoadException();
                     string name = s.Replace(modulePath, "").Replace(".dll", "");
-                    Assembly a = Assembly.LoadFrom(s);
+					Assembly a = Assembly.LoadFrom(s);
                     Type t = a.GetType(a.GetName().Name + "." + "Main");
                     object c = Activator.CreateInstance(t);
                     classes.Add(c);
@@ -89,7 +89,9 @@ namespace DynamicServer
                 {
                     Console.WriteLine(s.Replace(modulePath, "") + " failed to load");
                 }
-                catch (Exception p) { }
+                catch (Exception p) {
+					Console.WriteLine(p.StackTrace);
+				}
             }
         }
 
