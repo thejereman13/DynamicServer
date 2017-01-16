@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DynamicServer;
 using System.Diagnostics;
+using System.Net;
 
 namespace MinecraftServer {
 	class Main {
@@ -12,6 +13,7 @@ namespace MinecraftServer {
 		Process cmd = new Process();
 		private bool showoutput = true;
 		private bool serverRunning = false;
+		private List<IPEndPoint> clients = new List<IPEndPoint>();
 		public Main() {
 			cmd.StartInfo.FileName = "cmd.exe";
 			cmd.StartInfo.RedirectStandardInput = true;
@@ -19,9 +21,14 @@ namespace MinecraftServer {
 			cmd.OutputDataReceived += new DataReceivedEventHandler((sender, e) => {
 				if (showoutput)
 					Console.WriteLine(e.Data);
+				if(clients.Count > 0)
+					foreach(IPEndPoint ep in clients) {
+						ClientManagement.sendPacket(ep, "commandResponse" , new string[] { e.Data });
+					}
 			});
 			cmd.StartInfo.UseShellExecute = false;
 			Terminal.AddCommand("MCSERVER", serverCommands);
+			Terminal.AddClientCommand("MCSERVER", new Terminal.consoleCall(serverCommands));
 		}
 
 		public void AddHooks() {
@@ -30,10 +37,12 @@ namespace MinecraftServer {
 					stopServer();
 				}
 			};
+			Program.clientPassthrough.Add("MinecraftServer", recieveClient);
+			
 		}
 
 		public string serverCommands(List<string> args) {
-			if(args.Capacity > 1) {
+			if(args.Count > 0) {
 				switch(args[0]) {
 					case "start":
 						startServer();
@@ -42,7 +51,7 @@ namespace MinecraftServer {
 						stopServer();
 						return "Server Stopped";
 					case "showOutput":
-						if(args.Capacity > 2) {
+						if(args.Count > 1) {
 							if(args[1].Equals("true"))
 								showoutput = true;
 							else if(args[1].Equals("false"))
@@ -53,7 +62,7 @@ namespace MinecraftServer {
 						}
 						return "Invalid Arguments";
 					case "sendCommand":
-						if(args.Capacity > 2) {
+						if(args.Count > 1) {
 							string output = "";
 							args.RemoveAt(0);
 							foreach(string s in args) {
@@ -86,6 +95,7 @@ namespace MinecraftServer {
 			cmd.BeginOutputReadLine();
 			serverRunning = true;
 		}
+
 		private void stopServer() {
 			if(!serverRunning)
 				return;
@@ -94,6 +104,21 @@ namespace MinecraftServer {
 			serverRunning = false;
 			cmd.CancelOutputRead();
 			cmd.Kill();
+		}
+
+		private string recieveClient(IPEndPoint p, bool t) {
+			if(t) {
+				if(!clients.Contains(p)) {
+					clients.Add(p);
+					return "Client Added";
+				}
+			} else {
+				if(clients.Contains(p)) {
+					clients.Remove(p);
+					return "Client Removed";
+				}
+			}
+			return "Error";
 		}
 	}
 }

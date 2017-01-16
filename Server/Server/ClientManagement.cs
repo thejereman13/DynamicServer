@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DynamicServer {
-	class ClientManagement {
+	public class ClientManagement {
 
 		private const int port = 10069;
 		private static UdpClient serv;
@@ -58,13 +58,17 @@ namespace DynamicServer {
 				case "~remove":
 					if(clients.ContainsKey(output.data[0]))
 						clients.Remove(output.data[0]);
+					if (Program.clientPassthrough != null)
+						foreach(Program.sendClient c in Program.clientPassthrough.Values) {
+							c.Invoke(groupEP, false);
+						}
 					break;
 				case "console":
 					string o = "";
 					foreach(string s in output.data) {
 						o += (s + " ");
 					}
-					sendPacket(groupEP, "commandResponse", new string[] { Terminal.ExecuteCommand(o) });
+					sendPacket(groupEP, "commandResponse", new string[] { Terminal.ExecuteClientCommand(groupEP, o) });
 					break;
 				default:
 					Program.PacketCall(output);

@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Diagnostics;
+using System.Net;
 
 namespace DynamicServer
 {
@@ -20,8 +21,10 @@ namespace DynamicServer
 		public static event Action reloadEvent;		//Called before modules are reloaded in LoadModules()
 		public delegate void packetCall(UDPFrame message);
 		public static event packetCall packetEvent;
+		public delegate string sendClient(IPEndPoint p, bool add);
 
         public static List<object> classes = new List<object>();
+		public static Dictionary<string, sendClient> clientPassthrough = new Dictionary<string, sendClient>();
 
         static void Main(string[] args){
 			if(Debugger.IsAttached) {
@@ -34,6 +37,7 @@ namespace DynamicServer
 			packet = new Thread(ClientManagement.retrievalLoop);
 			packet.IsBackground = true;
 			packet.Start();
+
             while (runServer) {
 				string s = Console.ReadLine();
 				Console.WriteLine(Terminal.ExecuteCommand(s));
@@ -64,7 +68,7 @@ namespace DynamicServer
                         throw new FileLoadException();
                     string name = s.Replace(modulePath, "").Replace(".dll", "");
 					Assembly a = Assembly.LoadFrom(s);
-                    Type t = a.GetType(a.GetName().Name + "." + "Main");
+                    Type t = a.GetType(a.GetName().Name + ".Main");
                     object c = Activator.CreateInstance(t);
                     classes.Add(c);
                     try
