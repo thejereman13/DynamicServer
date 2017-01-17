@@ -8,5 +8,7 @@ namespace DynamicServer {
 		public string command;
 		[ProtoMember(2)]
 		public string[] data;
+		[ProtoMember(3)]
+		public string clientID;
 	}
 }

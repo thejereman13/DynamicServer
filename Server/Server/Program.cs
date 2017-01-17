@@ -21,7 +21,7 @@ namespace DynamicServer
 		public static event Action reloadEvent;		//Called before modules are reloaded in LoadModules()
 		public delegate void packetCall(UDPFrame message);
 		public static event packetCall packetEvent;
-		public delegate string sendClient(IPEndPoint p, bool add);
+		public delegate string sendClient(string client, bool add);
 
         public static List<object> classes = new List<object>();
 		public static Dictionary<string, sendClient> clientPassthrough = new Dictionary<string, sendClient>();

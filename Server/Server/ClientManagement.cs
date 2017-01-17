@@ -48,6 +48,8 @@ namespace DynamicServer {
 				if(output.command.Equals("~add")) {
 					newClient(groupEP);
 					Console.WriteLine("New Client: " + groupEP.Port.ToString());
+				} else {
+					checkClient(groupEP, output);
 				}
 				checkCommands(groupEP, output);
 			}
@@ -55,12 +57,14 @@ namespace DynamicServer {
 
 		private static void checkCommands(IPEndPoint groupEP, UDPFrame output) {
 			switch(output.command) {
+				case "heartbeat":
+					break;
 				case "~remove":
-					if(clients.ContainsKey(output.data[0]))
-						clients.Remove(output.data[0]);
+					if(clients.ContainsKey(output.clientID))
+						clients.Remove(output.clientID);
 					if (Program.clientPassthrough != null)
 						foreach(Program.sendClient c in Program.clientPassthrough.Values) {
-							c.Invoke(groupEP, false);
+							c.Invoke(output.clientID, false);
 						}
 					break;
 				case "console":
@@ -68,12 +72,18 @@ namespace DynamicServer {
 					foreach(string s in output.data) {
 						o += (s + " ");
 					}
-					sendPacket(groupEP, "commandResponse", new string[] { Terminal.ExecuteClientCommand(groupEP, o) });
+					sendPacket(groupEP, "commandResponse", new string[] { Terminal.ExecuteClientCommand(output.clientID, o) });
 					break;
 				default:
 					Program.PacketCall(output);
 					break;
 			}
+		}
+
+		private static void checkClient(IPEndPoint p, UDPFrame output) {
+			if(clients[output.clientID] == p)
+				return;
+			clients[output.clientID] = p;
 		}
 
 		private static byte[] UDPtoBytes(UDPFrame frame) {

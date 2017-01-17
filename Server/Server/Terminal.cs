@@ -10,7 +10,7 @@ namespace DynamicServer {
 	public class Terminal {
 		public delegate String consoleCall(List<string> args);
 		private static Dictionary<string, consoleCall> commands = new Dictionary<string, consoleCall>();
-		public delegate String clientCall(IPEndPoint p, List<string> args);
+		public delegate String clientCall(string client, List<string> args);
 		private static Dictionary<string, Delegate> clientCommands = new Dictionary<string, Delegate>();
 		static Terminal() {
 			commands.Add("BROADCASTPACKET", BroadcastPacket);
@@ -23,9 +23,11 @@ namespace DynamicServer {
 			commands.Add("LISTMODULES", ListModules);
 
 			clientCommands.Add("ECHO", new consoleCall(Echo));
+			clientCommands.Add("GETUID", new clientCall(getUID));
 			clientCommands.Add("HELP", new consoleCall(ClientHelp));
 			clientCommands.Add("LISTMODULES", new consoleCall(ListModules));
 			clientCommands.Add("PASSTHROUGH", new clientCall(PassThrough));
+			clientCommands.Add("SENDPACKET", new consoleCall(SendPacket));
 		}
 
 		public static void AddCommand(string name, consoleCall com) {
@@ -46,7 +48,7 @@ namespace DynamicServer {
 			}
 		}
 
-		public static string ExecuteClientCommand(IPEndPoint p, string paths) {
+		public static string ExecuteClientCommand(string client, string paths) {
 			List<string> args = paths.Split(' ').ToList();
 			Delegate ret;
 			if(!clientCommands.TryGetValue(args[0].ToUpper(), out ret)) {
@@ -54,7 +56,7 @@ namespace DynamicServer {
 			} else {
 				args.RemoveAt(0);
 				if(ret is clientCall)
-					return ((clientCall)ret)(p, args);
+					return ((clientCall)ret)(client, args);
 				else if(ret is consoleCall)
 					return ((consoleCall)ret)(args);
 				return "Command Error";
@@ -100,8 +102,16 @@ namespace DynamicServer {
 		}
 
 		private static string SendPacket(List<string> args) {
-			ClientManagement.sendPacket(ClientManagement.clients.Last().Value, "display", args.ToArray());
-			return "UDP sent";
+			if(args.Count > 1) {
+				string uid = args[0];
+				args.RemoveAt(0);
+				if(!ClientManagement.clients.ContainsKey(uid))
+					return "UID not found";
+				ClientManagement.sendPacket(ClientManagement.clients[uid], "display", args.ToArray());
+				return "UDP sent";
+			} else {
+				return "Usage: sendPacket <UID> <text>";
+			}
 		}
 
 		private static string BroadcastPacket(List<string> args) {
@@ -122,12 +132,16 @@ namespace DynamicServer {
 			return o;
 		}
 
-		private static string PassThrough(IPEndPoint ep, List<string> args) {
+		private static string PassThrough(string client, List<string> args) {
 			bool check;
 			if(args.Count > 1 && Boolean.TryParse(args[1], out check) && Program.clientPassthrough.ContainsKey(args[0]))
-				return Program.clientPassthrough[args[0]].Invoke(ep, check);
+				return Program.clientPassthrough[args[0]].Invoke(client, check);
 			else
 				return "Unable to parse command";
+		}
+
+		private static string getUID(string client, List<string> args) {
+			return client;
 		}
 
 	}

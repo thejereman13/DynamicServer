@@ -13,7 +13,7 @@ namespace MinecraftServer {
 		Process cmd = new Process();
 		private bool showoutput = true;
 		private bool serverRunning = false;
-		private List<IPEndPoint> clients = new List<IPEndPoint>();
+		private List<string> clients = new List<string>();
 		public Main() {
 			cmd.StartInfo.FileName = "cmd.exe";
 			cmd.StartInfo.RedirectStandardInput = true;
@@ -22,8 +22,9 @@ namespace MinecraftServer {
 				if (showoutput)
 					Console.WriteLine(e.Data);
 				if(clients.Count > 0)
-					foreach(IPEndPoint ep in clients) {
-						ClientManagement.sendPacket(ep, "commandResponse" , new string[] { e.Data });
+					foreach(string ep in clients) {
+						if (ClientManagement.clients.ContainsKey(ep))
+							ClientManagement.sendPacket(ClientManagement.clients[ep], "commandResponse" , new string[] { e.Data });
 					}
 			});
 			cmd.StartInfo.UseShellExecute = false;
@@ -106,15 +107,15 @@ namespace MinecraftServer {
 			cmd.Kill();
 		}
 
-		private string recieveClient(IPEndPoint p, bool t) {
+		private string recieveClient(string client, bool t) {
 			if(t) {
-				if(!clients.Contains(p)) {
-					clients.Add(p);
+				if(!clients.Contains(client)) {
+					clients.Add(client);
 					return "Client Added";
 				}
 			} else {
-				if(clients.Contains(p)) {
-					clients.Remove(p);
+				if(clients.Contains(client)) {
+					clients.Remove(client);
 					return "Client Removed";
 				}
 			}
