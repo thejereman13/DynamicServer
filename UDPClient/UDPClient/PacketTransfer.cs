@@ -80,10 +80,12 @@ namespace UDPClient {
 					ac("Connection established with the Server");
 					break;
 				case "display":
-					ac(recieved.data[0]);
+					if (recieved.data != null)
+						ac(recieved.data[0]);
 					break;
 				case "commandResponse":
-					ac(recieved.data[0]);
+					if (recieved.data != null)
+						ac(recieved.data[0]);
 					break;
 			}
 		}

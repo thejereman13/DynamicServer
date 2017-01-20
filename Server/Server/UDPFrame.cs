@@ -10,5 +10,7 @@ namespace DynamicServer {
 		public string[] data;
 		[ProtoMember(3)]
 		public string clientID;
+		[ProtoMember(4)]
+		public int packetID; 
 	}
 }

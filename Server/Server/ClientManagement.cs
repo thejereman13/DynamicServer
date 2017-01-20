@@ -33,6 +33,11 @@ namespace DynamicServer {
 			serv.Send(sendbuffer, sendbuffer.Length, ep);
 		}
 
+		public static void sendUDP(string client, UDPFrame frame) {
+			byte[] sendBuffer = UDPtoBytes(frame);
+			serv.Send(sendBuffer, sendBuffer.Length, clients[client]);
+		}
+
 		public static void sendAll(string s, string[] data) {
 			foreach(KeyValuePair<string, IPEndPoint> o in clients) {
 				sendPacket(o.Value, s, data);

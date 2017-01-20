@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace UDPClient {
-	public partial class Form1 : Form {
+	public partial class Client : Form {
 
 		public delegate void stringpass(String s);
-		public Form1() {
+		public Client() {
 			InitializeComponent();
 			new PacketTransfer(setText);
 		}
