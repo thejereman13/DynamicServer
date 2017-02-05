@@ -18,7 +18,8 @@ namespace DynamicServer
         static Thread loop;
 		static Thread packet;
         public static event Action LoopEvent;
-		public static event Action reloadEvent;		//Called before modules are reloaded in LoadModules()
+		public static event Action reloadEvent;     //Called before modules are reloaded in LoadModules()
+		public static event Action exitEvent;
 		public delegate void packetCall(UDPFrame message);
 		public static event packetCall packetEvent;
 		public delegate string sendClient(string client, bool add);
@@ -26,10 +27,12 @@ namespace DynamicServer
         public static List<object> classes = new List<object>();
 		public static Dictionary<string, sendClient> clientPassthrough = new Dictionary<string, sendClient>();
 
+
         static void Main(string[] args){
 			if(Debugger.IsAttached) {
 				modulePath = "../../../Modules/";
 			}
+
 			LoadModules();
             loop = new Thread(Loop);
 			loop.IsBackground = true;
@@ -44,9 +47,12 @@ namespace DynamicServer
 
             }
 			executeLogic = false;
+
+
         }
 
         public static void LoadModules() {
+
 			if (reloadEvent != null)
 				reloadEvent.Invoke();
             if (LoopEvent != null)
@@ -58,35 +64,35 @@ namespace DynamicServer
 				foreach(Delegate v in packetEvent.GetInvocationList()) {
 					packetEvent -= (packetCall)v;
 				}
+			if(exitEvent != null)
+				foreach(Delegate v in exitEvent.GetInvocationList()) {
+					exitEvent -= (Action)v;
+				}
+			if(reloadEvent != null)
+				foreach(Delegate v in reloadEvent.GetInvocationList()) {
+					reloadEvent -= (Action)v;
+				}
 
+
+			classes.Clear();
+			Terminal.resetCommands();
+			clientPassthrough.Clear();
 			string[] modules = Directory.GetFiles(modulePath);
             foreach (string s in modules)
             {
-                try
+				try
                 {
                     if (!s.Substring(s.Length - 4).Equals(".dll"))
                         throw new FileLoadException();
                     string name = s.Replace(modulePath, "").Replace(".dll", "");
-					Assembly a = Assembly.LoadFrom(s);
+					Console.WriteLine(name);
+					Assembly a = Assembly.Load(File.ReadAllBytes(s));
                     Type t = a.GetType(a.GetName().Name + ".Main");
-                    object c = Activator.CreateInstance(t);
+
+					IModule c = Activator.CreateInstance(t) as IModule;
                     classes.Add(c);
-                    try
-                    {
-                        if (t.GetMethod("LogicHook") != null)
-                        {
-                            LoopEvent += (Action)Delegate.CreateDelegate(typeof(Action), t.GetMethod("LogicHook"));
-                        }
-						if(t.GetMethod("PacketHook") != null) {
-							packetEvent += (packetCall)Delegate.CreateDelegate(typeof(packetCall), t.GetMethod("PacketHook"));
-						}
-						if(t.GetMethod("AddHooks") != null)
-							t.GetMethod("AddHooks").Invoke(c, null);
-					}
-                    catch (Exception g)
-                    {
-                        Console.WriteLine(g.StackTrace);
-                    }
+					c.AddHooks();
+
                     Console.WriteLine(s.Replace(modulePath, "") + " loaded");
                 }
                 catch (BadImageFormatException e)
@@ -94,7 +100,7 @@ namespace DynamicServer
                     Console.WriteLine(s.Replace(modulePath, "") + " failed to load");
                 }
                 catch (Exception p) {
-					Console.WriteLine(p.StackTrace);
+					Console.WriteLine(p.Message + " :" + p.StackTrace);
 				}
             }
         }
@@ -114,6 +120,12 @@ namespace DynamicServer
 		public static void PacketCall(UDPFrame data) {
 			if (packetEvent != null)
 				packetEvent.Invoke(data);
+		}
+
+		public static void Exit() {
+			Program.runServer = false;
+			if(Program.exitEvent != null)
+				Program.exitEvent.Invoke();
 		}
     }
 }

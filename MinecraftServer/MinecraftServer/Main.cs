@@ -8,8 +8,8 @@ using System.Diagnostics;
 using System.Net;
 
 namespace MinecraftServer {
-	class Main {
-
+	class Main : IModule{
+		private int restartcount = 0;
 		Process cmd = new Process();
 		private bool showoutput = true;
 		private bool serverRunning = false;
@@ -27,18 +27,37 @@ namespace MinecraftServer {
 							ClientManagement.sendPacket(ClientManagement.clients[ep], "commandResponse" , new string[] { e.Data });
 					}
 			});
+			cmd.Exited += Cmd_Exited;
 			cmd.StartInfo.UseShellExecute = false;
-			Terminal.AddCommand("MCSERVER", serverCommands);
-			Terminal.AddClientCommand("MCSERVER", new Terminal.consoleCall(serverCommands));
+			ModuleHelper.Terminal.addServerCommand("MCSERVER", serverCommands);
+			ModuleHelper.Terminal.addClientCommand("MCSERVER", new Terminal.consoleCall(serverCommands));
+		}
+
+		private void Cmd_Exited(object sender, EventArgs e) {
+			if(serverRunning) {
+				stopServer();
+				Console.WriteLine("Minecraft Server Crash Detected");
+				if(restartcount < 5) {
+					startServer();
+					restartcount++;
+				}
+			}
+
+			throw new NotImplementedException();
 		}
 
 		public void AddHooks() {
-			Program.reloadEvent += () => {
+			ModuleHelper.Server.addReloadEvent(() => {
 				if(serverRunning) {
 					stopServer();
 				}
-			};
-			Program.clientPassthrough.Add("MinecraftServer", recieveClient);
+			});
+			ModuleHelper.Server.addExitEvent(() => {
+				if(serverRunning) {
+					stopServer();
+				}
+			});
+			ModuleHelper.Server.registerPassThrough("MinecraftServer", recieveClient);
 			
 		}
 

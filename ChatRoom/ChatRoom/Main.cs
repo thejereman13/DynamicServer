@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using DynamicServer;
 
 namespace ChatRoom {
-	class Main {
+	class Main : IModule{
 
 		private Dictionary<string, List<string>> rooms = new Dictionary<string, List<string>>();
 

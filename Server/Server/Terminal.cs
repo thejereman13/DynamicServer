@@ -12,7 +12,16 @@ namespace DynamicServer {
 		private static Dictionary<string, consoleCall> commands = new Dictionary<string, consoleCall>();
 		public delegate String clientCall(string client, List<string> args);
 		private static Dictionary<string, Delegate> clientCommands = new Dictionary<string, Delegate>();
+		private static Dictionary<string, Delegate> adminCommands = new Dictionary<string, Delegate>();
 		static Terminal() {
+			resetCommands();
+		}
+
+		public static void resetCommands() {
+			commands.Clear();
+			clientCommands.Clear();
+			adminCommands.Clear();
+
 			commands.Add("BROADCASTPACKET", BroadcastPacket);
 			commands.Add("ECHO", Echo);
 			commands.Add("EXIT", Exit);
@@ -35,6 +44,9 @@ namespace DynamicServer {
 		}
 		public static void AddClientCommand(string name, Delegate com) {
 			clientCommands.Add(name, com);
+		}
+		public static void AddAdminCommand(string name, Delegate com) {
+			adminCommands.Add(name, com);
 		}
 
 		public static string ExecuteCommand(string paths) {
@@ -83,7 +95,7 @@ namespace DynamicServer {
 		}
 
 		private static string Exit(List<string> args) {
-			Program.runServer = false;
+			Program.Exit();
 			return "";
 		}
 		private static string Help(List<string> args) {

@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace DynamicServer {
-	public class ClientManagement {
+	public static class ClientManagement {
 
 		private const int port = 10069;
 		private static UdpClient serv;
@@ -102,5 +102,6 @@ namespace DynamicServer {
 				return Serializer.Deserialize<UDPFrame>(ms);
 			}
 		}
+
 	}
 }

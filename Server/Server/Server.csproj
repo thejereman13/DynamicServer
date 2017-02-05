@@ -48,7 +48,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyLoader.cs" />
     <Compile Include="ClientManagement.cs" />
+    <Compile Include="IModule.cs" />
+    <Compile Include="ModuleHelper.cs" />
     <Compile Include="Terminal.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
