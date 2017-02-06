@@ -48,8 +48,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyLoader.cs" />
     <Compile Include="ClientManagement.cs" />
+    <Compile Include="Encryption.cs" />
     <Compile Include="IModule.cs" />
     <Compile Include="ModuleHelper.cs" />
     <Compile Include="Terminal.cs" />

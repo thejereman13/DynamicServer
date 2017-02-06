@@ -25,6 +25,7 @@ namespace UDPClient {
 		private static string uid;
 
 		public static Thread listener;
+		static readonly Encryption crypt = new Encryption();
 
 		public PacketTransfer(stringpass a) {
 			ac = a;
@@ -93,11 +94,12 @@ namespace UDPClient {
 		private static byte[] UDPtoBytes(UDPFrame frame) {
 			using(MemoryStream ms = new MemoryStream()) {
 				Serializer.Serialize(ms, frame);
-				return ms.ToArray();
+				return crypt.Encrypt(ms.ToArray());
 			}
 		}
 		private static UDPFrame BytestoUDP(byte[] data) {
-			using(MemoryStream ms = new MemoryStream(data)) {
+			var dat = crypt.Decrypt(data);
+			using(MemoryStream ms = new MemoryStream(dat)) {
 				return Serializer.Deserialize<UDPFrame>(ms);
 			}
 		}

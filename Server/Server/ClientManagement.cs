@@ -15,10 +15,11 @@ namespace DynamicServer {
 		private const int port = 10069;
 		private static UdpClient serv;
 		public static Dictionary<string, IPEndPoint> clients = new Dictionary<string, IPEndPoint>();
-
+		static Encryption encrypt;
 
 		static ClientManagement() {
 			serv = new UdpClient(port);
+			encrypt = new Encryption();
 		}
 
 		public static void newClient(IPEndPoint groupEP) {
@@ -86,6 +87,8 @@ namespace DynamicServer {
 		}
 
 		private static void checkClient(IPEndPoint p, UDPFrame output) {
+			if(!clients.ContainsKey(output.clientID))
+				return;
 			if(clients[output.clientID] == p)
 				return;
 			clients[output.clientID] = p;
@@ -94,11 +97,12 @@ namespace DynamicServer {
 		private static byte[] UDPtoBytes(UDPFrame frame) {
 			using(MemoryStream ms = new MemoryStream()) {
 				Serializer.Serialize(ms, frame);
-				return ms.ToArray();
+				return encrypt.Encrypt(ms.ToArray());
 			}
 		}
 		private static UDPFrame BytestoUDP(byte[] data) {
-			using(MemoryStream ms = new MemoryStream(data)) {
+			var dat = encrypt.Decrypt(data);
+			using(MemoryStream ms = new MemoryStream(dat)) {
 				return Serializer.Deserialize<UDPFrame>(ms);
 			}
 		}
