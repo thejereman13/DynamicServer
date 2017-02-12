@@ -9,14 +9,21 @@ namespace DynamicServer {
 
 
 		public static class Terminal{
+			/// <summary>
+			/// Adds a command to the server console with the name s and a consolecall delegate c
+			/// </summary>
+			/// <param name="s"></param>
+			/// <param name="c"></param>
 			public static void addServerCommand(string s, DynamicServer.Terminal.consoleCall c) {
 				DynamicServer.Terminal.AddCommand(s, c);
 			}
-			public static void addClientCommand(string s, Delegate d) {
+			/// <summary>
+			/// Adds a client command with the name s and ClientCommand object containing the delegate for the method and, optionally, the authorization level for the command
+			/// </summary>
+			/// <param name="s"></param>
+			/// <param name="d"></param>
+			public static void addClientCommand(string s, DynamicServer.Terminal.ClientCommand d) {
 				DynamicServer.Terminal.AddClientCommand(s, d);
-			}
-			public static void addAdminCommand(string s, Delegate d) {
-				DynamicServer.Terminal.AddAdminCommand(s, d);
 			}
 		}
 

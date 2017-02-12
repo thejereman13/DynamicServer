@@ -11,12 +11,12 @@ namespace ChatRoom {
 		private Dictionary<string, List<string>> rooms = new Dictionary<string, List<string>>();
 
 		public Main() {
-			Terminal.AddClientCommand("CHATROOM", new Terminal.clientCall(serverCommands));
-			Terminal.AddClientCommand("SAY", new Terminal.clientCall(chat));
+			ModuleHelper.Terminal.addClientCommand("CHATROOM", new Terminal.ClientCommand(new Terminal.clientCall(serverCommands)));
+			ModuleHelper.Terminal.addClientCommand("SAY", new Terminal.ClientCommand(new Terminal.clientCall(chat)));
 		}
 
 		public void AddHooks() {
-			Program.clientPassthrough.Add("ChatRoom", recieveClient);
+			Program.clientPassthrough.Add("CHATROOM", recieveClient);
 		}
 
 		public string serverCommands(string uid, List<string> args) {
@@ -81,7 +81,7 @@ namespace ChatRoom {
 							output += (s + " ");
 						}
 						foreach(string s in d.Value) {
-							ClientManagement.sendPacket(ClientManagement.clients[s], "commandResponse", new string[] { output });
+							ClientManagement.sendPacket(ClientManagement.clients[s].endp, "commandResponse", new string[] { output });
 						}
 					}
 				}

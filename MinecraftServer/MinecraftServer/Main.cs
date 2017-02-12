@@ -24,13 +24,13 @@ namespace MinecraftServer {
 				if(clients.Count > 0)
 					foreach(string ep in clients) {
 						if (ClientManagement.clients.ContainsKey(ep))
-							ClientManagement.sendPacket(ClientManagement.clients[ep], "commandResponse" , new string[] { e.Data });
+							ClientManagement.sendPacket(ClientManagement.clients[ep].endp, "commandResponse" , new string[] { e.Data });
 					}
 			});
 			cmd.Exited += Cmd_Exited;
 			cmd.StartInfo.UseShellExecute = false;
 			ModuleHelper.Terminal.addServerCommand("MCSERVER", serverCommands);
-			ModuleHelper.Terminal.addClientCommand("MCSERVER", new Terminal.consoleCall(serverCommands));
+			ModuleHelper.Terminal.addClientCommand("MCSERVER", new Terminal.ClientCommand(new Terminal.consoleCall(serverCommands), 1));
 		}
 
 		private void Cmd_Exited(object sender, EventArgs e) {
@@ -57,31 +57,29 @@ namespace MinecraftServer {
 					stopServer();
 				}
 			});
-			ModuleHelper.Server.registerPassThrough("MinecraftServer", recieveClient);
+			ModuleHelper.Server.registerPassThrough("MINECRAFTSERVER", recieveClient);
 			
 		}
 
 		public string serverCommands(List<string> args) {
 			if(args.Count > 0) {
-				switch(args[0]) {
-					case "start":
+				switch(args[0].ToUpper()) {
+					case "START":
 						startServer();
 						return "Server Started";
-					case "stop":
+					case "STOP":
 						stopServer();
 						return "Server Stopped";
-					case "showOutput":
+					case "SHOWOUTPUT":
 						if(args.Count > 1) {
-							if(args[1].Equals("true"))
-								showoutput = true;
-							else if(args[1].Equals("false"))
-								showoutput = false;
-							else
-								return "Invalid Arguments";
+							bool b;
+							if (!bool.TryParse(args[1], out b))
+								return "Invalid Boolean Value";
+							showoutput = b;
 							return "Output Set";
 						}
-						return "Invalid Arguments";
-					case "sendCommand":
+						return "Usage: showOutput <true/false>";
+					case "SENDCOMMAND":
 						if(args.Count > 1) {
 							string output = "";
 							args.RemoveAt(0);
@@ -92,11 +90,11 @@ namespace MinecraftServer {
 							cmd.StandardInput.Flush();
 							return "";
 						} else {
-							return "Invalid Arguments";
+							return "Usage: sendCommand <command args>";
 						}
-					case "help":
-						return "start \n stop \n showOutput [true/false] \n sendCommand [args] \n";
-					case "status":
+					case "HELP":
+						return "start \n stop \n showOutput \n sendCommand \n";
+					case "STATUS":
 						return (serverRunning) ? ("Server Running") : ("Server Offline");
 					default:
 						return "No Command Found";
